@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-// Small local translation boundary: no new dependency is needed by this starter.
-// Historical note above: translations now use Angular's native $localize and XLIFF.
+// Maps API errors to localized user-facing messages ($localize + XLIFF).
 export function leaveRequestErrorMessage(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) return $localize`:@@requestError:The request failed. Please retry.`;
   if (error.status === 0) return $localize`:@@networkError:Cannot reach the server. Check the connection and retry.`;

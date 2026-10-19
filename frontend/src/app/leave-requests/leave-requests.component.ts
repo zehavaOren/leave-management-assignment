@@ -13,10 +13,6 @@ export function dateRangeValidator(control: AbstractControl): ValidationErrors |
     ? { dateOrder: true } : null;
 }
 
-// NOTE: This component was written quickly for a POC.
-// It talks to the API directly, manages state by hand and uses `any` everywhere.
-// Historical POC note above: HTTP lives in a service; state is typed.
-// Translations now use Angular i18n in templates and $localize in TypeScript.
 @Component({
   selector: 'app-leave-requests', standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
@@ -99,11 +95,8 @@ export class LeaveRequestsComponent implements OnInit {
     return messages.join(' ') || $localize`:@@formInvalid:Please correct the highlighted fields.`;
   }
 
-  // Wired up by the candidate as part of the assignment.
+  // Only the affected row is updated; the list is not reloaded.
   approve(id: number): void {
-    // TODO (candidate): call POST /api/leave-requests/{id}/approve
-    // and handle loading / error / success without a generic alert.
-    // Implemented below; only the returned row is replaced.
     if (this.approving().has(id) || this.loading()) return;
     this.success.set('');
     this.rowErrors.update(errors => ({ ...errors, [id]: '' }));

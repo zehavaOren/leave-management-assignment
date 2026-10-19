@@ -38,8 +38,4 @@ public class LeaveRequestsTests : IClassFixture<TestDatabase>
         Assert.IsType<OkObjectResult>(result);
         Assert.Single(db.LeaveRequests);
     }
-
-    // TODO (candidate): add a test that proves the balance bug is fixed —
-    // an employee who has already used most of the quota should NOT be able
-    // to create a request that pushes them over the annual quota.
 }

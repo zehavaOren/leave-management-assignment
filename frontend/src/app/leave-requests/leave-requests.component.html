@@ -5,7 +5,6 @@
 </div>
 <p *ngIf="error()" class="error" role="alert">{{ error() }}</p>
 <p *ngIf="success()" class="success" role="status">{{ success() }}</p>
-<!-- TODO (candidate): add the "new request" form here, with validation. -->
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
   <fieldset [disabled]="submitting() || loading()">
     <legend i18n="@@newRequest">New request</legend>

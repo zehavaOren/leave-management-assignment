@@ -10,8 +10,8 @@ public class Employee
     /// <summary>Annual paid-vacation quota in days.</summary>
     public int AnnualQuota { get; set; }
 
-    // Back-reference is not serialized: the POC returns entities straight from
-    // the controller, and the LeaveRequest <-> Employee navigation is circular.
+    // Back-reference is not serialized: EmployeesController returns this entity
+    // directly, and the LeaveRequest <-> Employee navigation is circular.
     [JsonIgnore]
     public List<LeaveRequest> LeaveRequests { get; set; } = new();
 }

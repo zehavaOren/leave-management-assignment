@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LeaveManagement.Api.Controllers;
 
-// NOTE: This controller was written quickly for a POC.
-// It does data access, business logic and validation all in one place.
-// Historical POC note above: these responsibilities now live in LeaveRequestService.
+// Thin HTTP layer: business rules and data access live in LeaveRequestService.
 [ApiController]
 [Route("api/leave-requests")]
 public class LeaveRequestsController : ControllerBase
@@ -27,20 +25,13 @@ public class LeaveRequestsController : ControllerBase
     // Lets the UI quickly find requests by employee name.
     [HttpGet("search")]
     public IActionResult Search([FromQuery, System.ComponentModel.DataAnnotations.StringLength(100)] string name)
-    {
-        // Build a quick query to filter by the employee name.
-        return Ok(_service.GetAll(name));
-    }
+        => Ok(_service.GetAll(name));
 
     // POST /api/leave-requests
     [HttpPost]
-    public IActionResult Create([FromBody] CreateLeaveRequestDto dto)
-    {
-        // How many vacation days has the employee already used this year?
-        // Make sure the request does not exceed the quota.
-        return Execute(() => _service.Create(dto));
-    }
+    public IActionResult Create([FromBody] CreateLeaveRequestDto dto) => Execute(() => _service.Create(dto));
 
+    // POST /api/leave-requests/{id}/approve
     [HttpPost("{id:int}/approve")]
     public IActionResult Approve(int id) => Execute(() => _service.Approve(id));
 

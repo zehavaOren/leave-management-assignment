@@ -56,9 +56,8 @@ builder.Services.AddDbContext<LeaveDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("Leave"));
 });
 
-// POC returns EF entities straight from the controller, which have circular
-// navigations (LeaveRequest <-> Employee). Tolerate the cycles so the app runs;
-// returning DTOs instead is a fair improvement for a candidate to suggest.
+// Leave requests are returned as DTOs; the employee lookup still serializes the
+// entity, so tolerate the LeaveRequest <-> Employee navigation cycle.
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
