@@ -28,7 +28,7 @@ public sealed class TestDatabase : IAsyncLifetime
     {
         if (UseSqlite) return;
 
-        _postgres = new PostgreSqlBuilder("postgres:16-alpine").Build();
+        _postgres = new PostgreSqlBuilder("postgres:16-alpine").WithDatabase("leave_tests").Build();
         await _postgres.StartAsync();
     }
 

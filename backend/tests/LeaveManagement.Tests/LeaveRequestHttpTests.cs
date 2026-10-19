@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using LeaveManagement.Api.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
+using LeaveManagement.Api.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
 
 namespace LeaveManagement.Tests;
@@ -18,12 +21,15 @@ public class LeaveRequestHttpTests
         public HttpTestApp() => _anchor.Open();
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    ["Database:Provider"] = "Sqlite",
-                    ["ConnectionStrings:LeaveSqlite"] = _anchor.ConnectionString
-                }));
+            // Override the resolved context, not late host configuration: Program
+            // chooses its provider before ConfigureAppConfiguration is applied.
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<LeaveDbContext>();
+                services.RemoveAll<DbContextOptions<LeaveDbContext>>();
+                services.AddScoped(_ => new LeaveDbContext(
+                    new DbContextOptionsBuilder<LeaveDbContext>().UseSqlite(_anchor).Options));
+            });
         }
         protected override void Dispose(bool disposing)
         {
