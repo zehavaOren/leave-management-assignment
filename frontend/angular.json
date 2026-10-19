@@ -15,32 +15,86 @@
             "outputPath": "dist/leave-management-frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js",
+              "@angular/localize/init"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/assets"],
-            "styles": ["src/styles.css"]
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "i18nMissingTranslation": "error"
           },
           "configurations": {
-            "production": { "optimization": true, "outputHashing": "all" },
-            "development": { "optimization": false, "sourceMap": true }
+            "production": {
+              "optimization": true,
+              "outputHashing": "all",
+              "localize": true
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true,
+              "localize": false
+            },
+            "he": {
+              "localize": [
+                "he"
+              ]
+            }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "leave-management-frontend:build:production" },
-            "development": { "buildTarget": "leave-management-frontend:build:development" }
+            "production": {
+              "buildTarget": "leave-management-frontend:build:production"
+            },
+            "development": {
+              "buildTarget": "leave-management-frontend:build:development"
+            },
+            "he": {
+              "buildTarget": "leave-management-frontend:build:development,he"
+            }
           },
           "defaultConfiguration": "development"
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": [
+              "@angular/localize/init",
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "tsconfig.spec.json",
-            "assets": ["src/assets"],
-            "styles": ["src/styles.css"]
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ]
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "buildTarget": "leave-management-frontend:build",
+            "format": "xlf",
+            "outputPath": "src/locale",
+            "outFile": "messages.xlf"
+          }
+        }
+      },
+      "i18n": {
+        "sourceLocale": "en-US",
+        "locales": {
+          "he": {
+            "translation": "src/locale/messages.he.xlf",
+            "baseHref": "/he/"
           }
         }
       }

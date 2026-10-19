@@ -19,7 +19,7 @@ table {
 th, td {
   border: 1px solid #d9e2ec;
   padding: 8px 12px;
-  text-align: left;
+  text-align: start;
 }
 
 button {

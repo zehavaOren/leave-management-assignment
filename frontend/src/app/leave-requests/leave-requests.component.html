@@ -1,73 +1,73 @@
 <div class="heading">
-  <h2>{{ 'title' | translate }}</h2>
-  <button type="button" class="secondary" (click)="load()"
-    [disabled]="loading() || submitting() || approving().size > 0">{{ 'refresh' | translate }}</button>
+  <h2 i18n="@@title">Leave requests</h2>
+  <button type="button" class="secondary" i18n="@@refresh" (click)="load()"
+    [disabled]="loading() || submitting() || approving().size > 0">Refresh</button>
 </div>
 <p *ngIf="error()" class="error" role="alert">{{ error() }}</p>
 <p *ngIf="success()" class="success" role="status">{{ success() }}</p>
 <!-- TODO (candidate): add the "new request" form here, with validation. -->
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
   <fieldset [disabled]="submitting() || loading()">
-    <legend>{{ 'newRequest' | translate }}</legend>
+    <legend i18n="@@newRequest">New request</legend>
     <div class="form-grid">
       <div>
-        <label for="employee">{{ 'employee' | translate }}</label>
+        <label for="employee" i18n="@@employee">Employee</label>
         <select id="employee" formControlName="employeeId" aria-describedby="employee-error"
           [attr.aria-invalid]="form.controls.employeeId.touched && form.controls.employeeId.invalid">
-          <option [ngValue]="null">{{ 'chooseEmployee' | translate }}</option>
+          <option [ngValue]="null" i18n="@@chooseEmployee">Choose an employee</option>
           <option *ngFor="let employee of employees()" [ngValue]="employee.id">{{ employee.name }}</option>
         </select>
-        <small id="employee-error" class="error" *ngIf="form.controls.employeeId.touched && form.controls.employeeId.invalid">{{ 'required' | translate }}</small>
+        <small id="employee-error" class="error" *ngIf="form.controls.employeeId.touched && form.controls.employeeId.invalid" i18n="@@required">This field is required.</small>
       </div>
       <div>
-        <label for="type">{{ 'type' | translate }}</label>
+        <label for="type" i18n="@@type">Leave type</label>
         <select id="type" formControlName="type" aria-describedby="type-error"
           [attr.aria-invalid]="form.controls.type.touched && form.controls.type.invalid">
-          <option [ngValue]="null">{{ 'chooseType' | translate }}</option>
-          <option *ngFor="let type of types" [ngValue]="type.value">{{ type.label | translate }}</option>
+          <option [ngValue]="null" i18n="@@chooseType">Choose a leave type</option>
+          <option *ngFor="let type of types" [ngValue]="type.value">{{ type.label }}</option>
         </select>
-        <small id="type-error" class="error" *ngIf="form.controls.type.touched && form.controls.type.invalid">{{ 'required' | translate }}</small>
+        <small id="type-error" class="error" *ngIf="form.controls.type.touched && form.controls.type.invalid" i18n="@@required">This field is required.</small>
       </div>
       <div>
-        <label for="start">{{ 'start' | translate }}</label>
+        <label for="start" i18n="@@start">Start date</label>
         <input id="start" type="date" formControlName="startDate" aria-describedby="start-error date-order">
-        <small id="start-error" class="error" *ngIf="form.controls.startDate.touched && form.controls.startDate.invalid">{{ 'required' | translate }}</small>
+        <small id="start-error" class="error" *ngIf="form.controls.startDate.touched && form.controls.startDate.invalid" i18n="@@required">This field is required.</small>
       </div>
       <div>
-        <label for="end">{{ 'end' | translate }}</label>
+        <label for="end" i18n="@@end">End date</label>
         <input id="end" type="date" formControlName="endDate" [min]="form.controls.startDate.value" aria-describedby="end-error date-order">
-        <small id="end-error" class="error" *ngIf="form.controls.endDate.touched && form.controls.endDate.invalid">{{ 'required' | translate }}</small>
+        <small id="end-error" class="error" *ngIf="form.controls.endDate.touched && form.controls.endDate.invalid" i18n="@@required">This field is required.</small>
       </div>
     </div>
-    <p id="date-order" class="error" *ngIf="form.hasError('dateOrder') && (form.controls.startDate.touched || form.controls.endDate.touched)">{{ 'dateOrder' | translate }}</p>
+    <p id="date-order" class="error" *ngIf="form.hasError('dateOrder') && (form.controls.startDate.touched || form.controls.endDate.touched)" i18n="@@dateOrder">End date must be on or after start date.</p>
     <div class="form-footer">
-      <span>{{ 'days' | translate }}: <output aria-live="polite">{{ days }}</output></span>
-      <button type="submit" [disabled]="submitting() || loading()">{{ (submitting() ? 'submitting' : 'submit') | translate }}</button>
+      <span><ng-container i18n="@@days">Calendar days</ng-container>: <output aria-live="polite">{{ days }}</output></span>
+      <button type="submit" [disabled]="submitting() || loading()"><ng-container *ngIf="submitting(); else submitLabel" i18n="@@submitting">Submitting…</ng-container><ng-template #submitLabel><ng-container i18n="@@submit">Submit request</ng-container></ng-template></button>
     </div>
   </fieldset>
 </form>
-<p *ngIf="loading()" role="status">{{ 'loading' | translate }}</p>
+<p *ngIf="loading()" role="status" i18n="@@loading">Loading…</p>
 <div class="table-scroll" [attr.aria-busy]="loading()">
   <table *ngIf="!loading()">
     <thead><tr>
-      <th scope="col">#</th><th scope="col">{{ 'employee' | translate }}</th>
-      <th scope="col">{{ 'type' | translate }}</th><th scope="col">{{ 'start' | translate }}</th>
-      <th scope="col">{{ 'end' | translate }}</th><th scope="col">{{ 'days' | translate }}</th>
-      <th scope="col">{{ 'status' | translate }}</th><th scope="col">{{ 'actions' | translate }}</th>
+      <th scope="col">#</th><th scope="col" i18n="@@employee">Employee</th>
+      <th scope="col" i18n="@@type">Leave type</th><th scope="col" i18n="@@start">Start date</th>
+      <th scope="col" i18n="@@end">End date</th><th scope="col" i18n="@@days">Calendar days</th>
+      <th scope="col" i18n="@@status">Status</th><th scope="col" i18n="@@actions">Actions</th>
     </tr></thead>
     <tbody>
       <tr *ngFor="let r of requests(); trackBy: trackRequest">
-        <td>{{ r.id }}</td><td>{{ r.employee?.name || (('employeeFallback' | translate) + r.employeeId) }}</td>
+        <td>{{ r.id }}</td><td>{{ employeeLabel(r) }}</td>
         <td>{{ typeLabel(r.type) }}</td><td>{{ r.startDate | date: 'dd/MM/yyyy' }}</td>
         <td>{{ r.endDate | date: 'dd/MM/yyyy' }}</td><td>{{ r.days }}</td><td>{{ statusLabel(r.status) }}</td>
         <td>
           <button type="button" *ngIf="r.status === pending" (click)="approve(r.id)" [disabled]="approving().has(r.id)">
-            {{ (approving().has(r.id) ? 'approving' : 'approve') | translate }}
+            <ng-container *ngIf="approving().has(r.id); else approveLabel" i18n="@@approving">Approving…</ng-container><ng-template #approveLabel><ng-container i18n="@@approve">Approve</ng-container></ng-template>
           </button>
           <p *ngIf="rowErrors()[r.id]" class="error row-error" role="alert">{{ rowErrors()[r.id] }}</p>
         </td>
       </tr>
-      <tr *ngIf="requests().length === 0"><td colspan="8">{{ 'empty' | translate }}</td></tr>
+      <tr *ngIf="requests().length === 0"><td colspan="8" i18n="@@empty">No leave requests yet.</td></tr>
     </tbody>
   </table>
 </div>

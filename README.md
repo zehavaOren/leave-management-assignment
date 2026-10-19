@@ -156,4 +156,17 @@ npm start
 - אישור בקשה עם בדיקת יתרה חוזרת ונעילת עובד ב־PostgreSQL.
 - חיפוש פרמטרי, תגובות DTO ושגיאות ProblemDetails.
 - טופס עם ולידציה ומצבי טעינה, שגיאה והצלחה; אישור מעדכן שורה ללא טעינה חוזרת של הרשימה.
-- אין חבילות חדשות או שינוי סכימה. PostgreSQL הוא היעד; לאחר התקנת Docker עברו כל 27 בדיקות השרת, כולל תחרותיות. הוראות לפורט המקומי 5433 מופיעות ב־DECISIONS.md.
+- אין שינוי סכימה. באישור המשתמשת נוספה @angular/localize@17.3.12 עבור Angular i18n המובנה. PostgreSQL הוא היעד; לאחר התקנת Docker עברו כל 27 בדיקות השרת, כולל תחרותיות. הוראות לפורט המקומי 5433 מופיעות ב־DECISIONS.md.
+
+### שפות הממשק
+
+מתוך frontend:
+
+```powershell
+npm start           # English, http://localhost:4200
+npm run start:he    # Hebrew + RTL, same port; stop English first
+npm run extract-i18n
+npm run build -- --configuration production  # Builds en-US and he
+```
+
+תרגומים: src/locale/messages.he.xlf. טקסט המקור באנגלית מסומן ב־i18n וב־$localize בקוד. אין שירות תרגום או pipe מותאמים; המנגנון הוא Angular i18n של Angular 17.
