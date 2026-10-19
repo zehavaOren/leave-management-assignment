@@ -62,6 +62,14 @@ describe('LeaveRequestsComponent', () => {
     expect(component.approving().size).toBe(0); expect(component.rowErrors()[7]).toBeTruthy();
     expect(component.requests()[0].status).toBe(LeaveStatus.Pending); expect(component.success()).toBe('');
   });
+  it('marks the row approved when the server reports it was already approved', () => {
+    loaded(); component.approve(7);
+    http.expectOne(`${url}/leave-requests/7/approve`)
+      .flush({ code: 'request_already_approved' }, { status: 409, statusText: 'Conflict' });
+    expect(component.requests()[0].status).toBe(LeaveStatus.Approved);
+    expect(component.rowErrors()[7]).toBe('This request has already been approved.');
+    http.expectNone(`${url}/leave-requests`);
+  });
   it('clears submitting on failure and keeps form values for retry', () => {
     loaded(); validForm(); component.submit();
     http.expectOne(`${url}/leave-requests`).flush({}, { status: 400, statusText: 'Bad Request' });

@@ -115,7 +115,12 @@ export class LeaveRequestsComponent implements OnInit {
         this.requests.update(requests => requests.map(row => row.id === request.id ? request : row));
         this.success.set($localize`:@@approvedSuccess:Request approved successfully.`);
       },
-      error: (error: unknown) => this.rowErrors.update(errors => ({ ...errors, [id]: this.api.errorMessage(error) }))
+      error: (error: unknown) => {
+        const status = this.api.statusAfterFailedApproval(error);
+        if (status !== null)
+          this.requests.update(requests => requests.map(row => row.id === id ? { ...row, status } : row));
+        this.rowErrors.update(errors => ({ ...errors, [id]: this.api.errorMessage(error) }));
+      }
     });
   }
 

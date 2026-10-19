@@ -22,7 +22,7 @@ export function leaveRequestErrorMessage(error: unknown): string {
       invalid_date_range: $localize`:@@dateOrder:End date must be on or after start date.`,
       employee_not_found: $localize`:@@employeeMissing:The selected employee no longer exists. Refresh the employee list.`,
       request_not_found: $localize`:@@requestMissing:This leave request no longer exists. Refresh the list.`,
-      request_already_approved: $localize`:@@alreadyApproved:This request has already been approved. Refresh to see its latest status.`,
+      request_already_approved: $localize`:@@alreadyApproved:This request has already been approved.`,
       request_rejected: $localize`:@@requestRejected:This request has been rejected and cannot be approved.`
     };
     if (typeof code === 'string' && Object.prototype.hasOwnProperty.call(messages, code)) return messages[code];

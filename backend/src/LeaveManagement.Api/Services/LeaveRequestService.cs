@@ -102,7 +102,7 @@ public sealed class LeaveRequestService
             throw new LeaveRequestException(409,
                 request.Status == LeaveStatus.Approved ? "request_already_approved" : "request_rejected",
                 request.Status == LeaveStatus.Approved
-                    ? "This request has already been approved. Refresh to see its latest status."
+                    ? "This request has already been approved."
                     : "This request has been rejected and cannot be approved.");
         EnsureBalance(employee, request.Type, request.StartDate, request.EndDate, 409);
         request.Status = LeaveStatus.Approved;
