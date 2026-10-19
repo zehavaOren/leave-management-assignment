@@ -108,4 +108,125 @@ public class LeaveRequestHttpTests
         Assert.Equal(3, problem.GetProperty("requestedDays").GetInt32());
         Assert.Equal(2, problem.GetProperty("remainingDays").GetInt32());
     }
+
+    [Theory]
+    [InlineData("/api/employees")]
+    [InlineData("/api/leave-requests")]
+    public async Task Http_PersonalData_IsNotCacheable(string path)
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        using var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        Assert.Equal("nosniff", Assert.Single(response.Headers.GetValues("X-Content-Type-Options")));
+    }
+
+    [Fact]
+    public async Task Http_Swagger_IsNotExposedInProduction()
+    {
+        using var app = CreateApp().WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
+        using var client = app.CreateClient();
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Production")]
+    public async Task Http_UnexpectedFailure_DoesNotDiscloseInternalDetails(string environment)
+    {
+        using var app = CreateApp().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(environment);
+            builder.ConfigureServices(services => services.AddControllers()
+                .AddApplicationPart(typeof(SecurityFailureTestController).Assembly));
+        });
+        using var client = app.CreateClient();
+        using var response = await client.GetAsync("/api/security-test-failure");
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("SECRET_CONNECTION_DETAIL", body);
+        Assert.DoesNotContain("InvalidOperationException", body);
+        Assert.DoesNotContain("stackTrace", body);
+        Assert.Contains("An unexpected error occurred.", body);
+    }
+
+    [Fact]
+    public async Task Http_OversizedPayload_IsRejectedBeforeItIsProcessed()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        using var content = new StringContent("{\"padding\":\"" + new string('x', 17000) + "\"}",
+            System.Text.Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/api/leave-requests", content);
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Http_ServerBodyLimitFailure_Remains413InsteadOf500()
+    {
+        using var app = CreateApp().WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.AddControllers().AddApplicationPart(typeof(SecurityFailureTestController).Assembly)));
+        using var client = app.CreateClient();
+        using var response = await client.GetAsync("/api/security-test-failure/body-too-large");
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+        Assert.DoesNotContain("INTERNAL_BODY_LIMIT_DETAIL", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Http_Overposting_CannotSetApprovalDaysOrEmployeeQuota()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        using var response = await client.PostAsJsonAsync("/api/leave-requests", new
+        {
+            employeeId = 2, type = 0, startDate = "2027-01-01", endDate = "2027-01-02",
+            status = 1, days = -999, employee = new { id = 2, annualQuota = 999999 }
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var request = await response.Content.ReadFromJsonAsync<LeaveRequestResponse>();
+        Assert.Equal(LeaveStatus.Pending, request!.Status);
+        Assert.Equal(2, request.Days);
+        Assert.Equal(14, request.Employee!.AnnualQuota);
+    }
+
+    [Fact]
+    public async Task Http_Search_RejectsExcessivelyLongInput()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        using var response = await client.GetAsync("/api/leave-requests/search?name=" + new string('x', 101));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Http_RateLimit_CannotBeBypassedWithSpoofedForwardedHeaders()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        for (var i = 1; i <= 120; i++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/employees");
+            request.Headers.Add("X-Forwarded-For", $"203.0.113.{i}");
+            using var response = await client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        using var rejected = await client.GetAsync("/api/employees");
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+        Assert.NotNull(rejected.Headers.RetryAfter);
+    }
+
+}
+
+// This controller exists only in the test assembly and is registered by its test factory.
+[Microsoft.AspNetCore.Mvc.ApiController]
+[Microsoft.AspNetCore.Mvc.Route("api/security-test-failure")]
+public sealed class SecurityFailureTestController : Microsoft.AspNetCore.Mvc.ControllerBase
+{
+    [Microsoft.AspNetCore.Mvc.HttpGet]
+    public Microsoft.AspNetCore.Mvc.IActionResult Get() =>
+        throw new InvalidOperationException("SECRET_CONNECTION_DETAIL");
+    [Microsoft.AspNetCore.Mvc.HttpGet("body-too-large")]
+    public Microsoft.AspNetCore.Mvc.IActionResult BodyTooLarge() =>
+        throw new Microsoft.AspNetCore.Http.BadHttpRequestException("INTERNAL_BODY_LIMIT_DETAIL", 413);
 }

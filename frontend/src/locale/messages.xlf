@@ -21,7 +21,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">8</context>
+          <context context-type="linenumber">9</context>
         </context-group>
       </trans-unit>
       <trans-unit id="networkError" datatype="html">
@@ -31,22 +31,29 @@
           <context context-type="linenumber">7</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="tooManyRequests" datatype="html">
+        <source>Too many requests. Wait a minute and try again.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="invalidEmployee" datatype="html">
         <source>Choose a valid employee.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">16</context>
+          <context context-type="linenumber">17</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="chooseType" datatype="html">
         <source>Choose a leave type</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">18</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/leave-requests/leave-requests.component.html</context>
@@ -61,30 +68,15 @@
         <source>The selected leave type is invalid. Choose Vacation, Sick or Unpaid.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">18</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">34</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="startDateInvalid" datatype="html">
-        <source>Enter a valid start date.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
           <context context-type="linenumber">19</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">32</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/leave-requests/leave-requests.component.ts</context>
-          <context context-type="linenumber">95</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="endDateInvalid" datatype="html">
-        <source>Enter a valid end date.</source>
+      <trans-unit id="startDateInvalid" datatype="html">
+        <source>Enter a valid start date.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
           <context context-type="linenumber">20</context>
@@ -95,6 +87,21 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/leave-requests/leave-requests.component.ts</context>
+          <context context-type="linenumber">95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="endDateInvalid" datatype="html">
+        <source>Enter a valid end date.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/leave-requests/leave-requests.component.ts</context>
           <context context-type="linenumber">96</context>
         </context-group>
       </trans-unit>
@@ -102,7 +109,7 @@
         <source>End date must be on or after start date.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">21</context>
+          <context context-type="linenumber">22</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/leave-requests/leave-requests.component.html</context>
@@ -117,63 +124,63 @@
         <source>The selected employee no longer exists. Refresh the employee list.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">22</context>
+          <context context-type="linenumber">23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="requestMissing" datatype="html">
         <source>This leave request no longer exists. Refresh the list.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">23</context>
+          <context context-type="linenumber">24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="alreadyApproved" datatype="html">
         <source>This request has already been approved. Refresh to see its latest status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">24</context>
+          <context context-type="linenumber">25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="requestRejected" datatype="html">
         <source>This request has been rejected and cannot be approved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">25</context>
+          <context context-type="linenumber">26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="invalid" datatype="html">
         <source>Some request fields are missing or invalid. Review the form.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="missing" datatype="html">
         <source>The employee or request no longer exists.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="conflict" datatype="html">
         <source>The request changed. Refresh to see its latest status and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">42</context>
+          <context context-type="linenumber">43</context>
         </context-group>
       </trans-unit>
       <trans-unit id="balanceDetails" datatype="html">
         <source>Not enough vacation balance for <x id="year" equiv-text="year"/>: requested <x id="requestedDays" equiv-text="requestedDays"/> days, available <x id="remainingDays" equiv-text="remainingDays"/> days.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">52</context>
+          <context context-type="linenumber">53</context>
         </context-group>
       </trans-unit>
       <trans-unit id="balanceError" datatype="html">
         <source>There is not enough vacation balance for this request.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="title" datatype="html">

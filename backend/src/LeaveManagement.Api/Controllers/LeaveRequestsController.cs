@@ -26,7 +26,7 @@ public class LeaveRequestsController : ControllerBase
     // GET /api/leave-requests/search?name=Dana
     // Lets the UI quickly find requests by employee name.
     [HttpGet("search")]
-    public IActionResult Search([FromQuery] string name)
+    public IActionResult Search([FromQuery, System.ComponentModel.DataAnnotations.StringLength(100)] string name)
     {
         // Build a quick query to filter by the employee name.
         return Ok(_service.GetAll(name));

@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: leave
       POSTGRES_PASSWORD: leave
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,7 +21,7 @@ services:
       ASPNETCORE_URLS: "http://+:5080"
       ConnectionStrings__Leave: "Host=db;Port=5432;Database=leave;Username=leave;Password=leave"
     ports:
-      - "5080:5080"
+      - "127.0.0.1:5080:5080"
     depends_on:
       db:
         condition: service_healthy

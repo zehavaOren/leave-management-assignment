@@ -47,4 +47,8 @@ describe('LeaveRequestService error messages', () => {
       error: { code: 'invalid_date_range', title: 'secret exception' } })))
       .toBe('The request failed. Please retry.');
   });
+  it('explains rate limiting without blaming the request fields', () => {
+    expect(service.errorMessage(new HttpErrorResponse({ status: 429 })))
+      .toBe('Too many requests. Wait a minute and try again.');
+  });
 });

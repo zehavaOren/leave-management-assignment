@@ -476,6 +476,14 @@
           <context context-type="linenumber">132</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="tooManyRequests" datatype="html">
+        <source>Too many requests. Wait a minute and try again.</source>
+        <target state="translated">נשלחו יותר מדי בקשות. המתינו דקה ונסו שוב.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

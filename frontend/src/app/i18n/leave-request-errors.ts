@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export function leaveRequestErrorMessage(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) return $localize`:@@requestError:The request failed. Please retry.`;
   if (error.status === 0) return $localize`:@@networkError:Cannot reach the server. Check the connection and retry.`;
+  if (error.status === 429) return $localize`:@@tooManyRequests:Too many requests. Wait a minute and try again.`;
   if (![400, 404, 409].includes(error.status)) return $localize`:@@requestError:The request failed. Please retry.`;
 
   // Treat the response body as untrusted data; never display a raw server title or stack trace.
