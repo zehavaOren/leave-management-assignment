@@ -4,7 +4,7 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validatio
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { Employee, LeaveRequest, LeaveStatus, LeaveType } from '../models/leave-request.model';
-import { LeaveRequestService, TranslatePipe, TranslateService, TranslationKey } from './leave-request.service';
+import { LeaveRequestService, TranslatePipe, TranslateService, TranslationKey } from '../services/leave-request.service';
 
 export function dateRangeValidator(control: AbstractControl): ValidationErrors | null {
   const start: unknown = control.get('startDate')?.value;
