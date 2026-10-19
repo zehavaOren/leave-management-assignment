@@ -23,7 +23,7 @@ public class LeaveRequestsTests : IClassFixture<TestDatabase>
         db.Employees.Add(emp);
         db.SaveChanges();
 
-        var controller = new LeaveRequestsController(db);
+        var controller = new LeaveRequestsController(new LeaveManagement.Api.Services.LeaveRequestService(db));
 
         // Act: request 3 days, well within the quota.
         var result = controller.Create(new CreateLeaveRequestDto
@@ -43,3 +43,4 @@ public class LeaveRequestsTests : IClassFixture<TestDatabase>
     // an employee who has already used most of the quota should NOT be able
     // to create a request that pushes them over the annual quota.
 }
+

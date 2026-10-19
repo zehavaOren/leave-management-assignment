@@ -3,6 +3,8 @@ using LeaveManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<LeaveManagement.Api.Services.LeaveRequestService>();
+builder.Services.AddProblemDetails();
 
 // PostgreSQL by default — `docker compose up` brings one up next to the API.
 // No Docker on the machine? Set Database:Provider=Sqlite and the app runs
@@ -36,6 +38,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseExceptionHandler();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -53,3 +56,4 @@ app.Run();
 
 // Exposed so the integration tests can reference the entry point.
 public partial class Program { }
+
