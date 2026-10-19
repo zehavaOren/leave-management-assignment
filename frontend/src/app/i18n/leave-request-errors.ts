@@ -13,6 +13,7 @@ export function leaveRequestErrorMessage(error: unknown): string {
     const code = problem['code'];
     if (code === 'insufficient_balance') return balanceMessage(problem);
     const messages: Readonly<Record<string, string>> = {
+      overlapping_request: $localize`:@@overlappingRequest:These dates overlap another leave request for this employee. Choose different dates.`,
       invalid_employee: $localize`:@@invalidEmployee:Choose a valid employee.`,
       leave_type_required: $localize`:@@chooseType:Choose a leave type`,
       invalid_leave_type: $localize`:@@invalidLeaveType:The selected leave type is invalid. Choose Vacation, Sick or Unpaid.`,

@@ -52,8 +52,9 @@ public sealed class LeaveRequestService
         if (end < start)
             throw new LeaveRequestException(400, "invalid_date_range", "End date must be on or after start date.");
 
-        var employee = _db.Employees.SingleOrDefault(e => e.Id == dto.EmployeeId)
-            ?? throw new LeaveRequestException(404, "employee_not_found", "The selected employee no longer exists.");
+        using var transaction = _db.Database.BeginTransaction(_db.Database.IsNpgsql() ? System.Data.IsolationLevel.ReadCommitted : System.Data.IsolationLevel.Serializable);
+        var employee = LockEmployee(dto.EmployeeId);
+        EnsureNoOverlap(employee.Id, start, end, includePending: true);
         EnsureBalance(employee, dto.Type.Value, start, end, 400);
         var request = new LeaveRequest
         {
@@ -63,6 +64,7 @@ public sealed class LeaveRequestService
         };
         _db.LeaveRequests.Add(request);
         _db.SaveChanges();
+        transaction.Commit();
         return ToResponse(request);
     }
 
@@ -83,19 +85,7 @@ public sealed class LeaveRequestService
     private LeaveRequestResponse ApproveLocked(int id, int employeeId,
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction)
     {
-        Employee employee;
-        if (_db.Database.IsNpgsql())
-        {
-            employee = _db.Employees.FromSqlInterpolated(
-                $"SELECT * FROM \"Employees\" WHERE \"Id\" = {employeeId} FOR UPDATE")
-                .AsEnumerable().Single();
-        }
-        else
-        {
-            // SQLite's serializable write transaction is a local fallback. It does
-            // not establish that PostgreSQL row-lock behaviour has been tested.
-            employee = _db.Employees.Single(e => e.Id == employeeId);
-        }
+        var employee = LockEmployee(employeeId);
         var request = _db.LeaveRequests.Include(r => r.Employee).Single(r => r.Id == id);
         _db.Entry(request).Reload();
         if (request.Status != LeaveStatus.Pending)
@@ -104,11 +94,38 @@ public sealed class LeaveRequestService
                 request.Status == LeaveStatus.Approved
                     ? "This request has already been approved."
                     : "This request has been rejected and cannot be approved.");
+        EnsureNoOverlap(employee.Id, request.StartDate, request.EndDate, includePending: false, excludedId: request.Id);
         EnsureBalance(employee, request.Type, request.StartDate, request.EndDate, 409);
         request.Status = LeaveStatus.Approved;
         _db.SaveChanges();
         transaction.Commit();
         return ToResponse(request);
+    }
+
+    private Employee LockEmployee(int employeeId)
+    {
+        if (_db.Database.IsNpgsql())
+        {
+            return _db.Employees.FromSqlInterpolated(
+                $"SELECT * FROM \"Employees\" WHERE \"Id\" = {employeeId} FOR UPDATE")
+                .AsEnumerable().SingleOrDefault()
+                ?? throw new LeaveRequestException(404, "employee_not_found", "The selected employee no longer exists.");
+        }
+        // SQLite's serializable write transaction is a local fallback. It does
+        // not establish that PostgreSQL row-lock behaviour has been tested.
+        return _db.Employees.SingleOrDefault(e => e.Id == employeeId)
+            ?? throw new LeaveRequestException(404, "employee_not_found", "The selected employee no longer exists.");
+    }
+
+    private void EnsureNoOverlap(int employeeId, DateTime start, DateTime end,
+        bool includePending, int excludedId = 0)
+    {
+        if (_db.LeaveRequests.AsNoTracking().Any(r => r.EmployeeId == employeeId &&
+            r.Id != excludedId && (r.Status == LeaveStatus.Approved ||
+                (includePending && r.Status == LeaveStatus.Pending)) &&
+            r.StartDate <= end && r.EndDate >= start))
+            throw new LeaveRequestException(409, "overlapping_request",
+                "These dates overlap another leave request for this employee. Choose different dates.");
     }
 
     private void EnsureBalance(Employee employee, LeaveType type, DateTime start, DateTime end, int statusCode)

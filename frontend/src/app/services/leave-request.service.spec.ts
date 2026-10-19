@@ -47,6 +47,10 @@ describe('LeaveRequestService error messages', () => {
       error: { code: 'invalid_date_range', title: 'secret exception' } })))
       .toBe('The request failed. Please retry.');
   });
+  it('explains overlapping leave dates', () => {
+    expect(service.errorMessage(new HttpErrorResponse({ status: 409, error: { code: 'overlapping_request' } })))
+      .toBe('These dates overlap another leave request for this employee. Choose different dates.');
+  });
   it('explains rate limiting without blaming the request fields', () => {
     expect(service.errorMessage(new HttpErrorResponse({ status: 429 })))
       .toBe('Too many requests. Wait a minute and try again.');

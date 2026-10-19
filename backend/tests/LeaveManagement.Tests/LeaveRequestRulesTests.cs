@@ -90,6 +90,20 @@ public class LeaveRequestRulesTests : IClassFixture<TestDatabase>
             .Create(Dto(e, new(2026, 3, 1), new(2026, 3, 1))));
     }
 
+    [Fact]
+    public void Employees_GetAll_ReturnsDtoWithoutTrackingEntities()
+    {
+        using var db = _database.NewDb();
+        var employee = AddEmployee(db);
+        db.ChangeTracker.Clear();
+        var result = Assert.IsType<OkObjectResult>(new EmployeesController(new EmployeeService(db)).GetAll());
+        var response = Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<EmployeeResponse>>(result.Value));
+        Assert.Equal(employee.Id, response.Id);
+        Assert.Equal(employee.Name, response.Name);
+        Assert.Equal(employee.AnnualQuota, response.AnnualQuota);
+        Assert.Empty(db.ChangeTracker.Entries());
+    }
+
     [Theory]
     [InlineData(LeaveStatus.Pending)]
     [InlineData(LeaveStatus.Rejected)]
@@ -173,6 +187,103 @@ public class LeaveRequestRulesTests : IClassFixture<TestDatabase>
         var service = new LeaveRequestService(db);
         Assert.Empty(service.GetAll("' OR 1=1 --"));
         Assert.Single(service.GetAll("Rules"));
+    }
+
+    [Theory]
+    [InlineData(LeaveStatus.Pending, 1, 3)]
+    [InlineData(LeaveStatus.Approved, 1, 3)]
+    [InlineData(LeaveStatus.Pending, 3, 5)]
+    [InlineData(LeaveStatus.Approved, 1, 1)]
+    [InlineData(LeaveStatus.Pending, 2, 2)]
+    public void Create_OverlapIncludingBoundary_Returns409(LeaveStatus status, int start, int end)
+    {
+        using var db = _database.NewDb();
+        var employee = AddEmployee(db);
+        AddRequest(db, employee, new(2026, 3, 1), new(2026, 3, 3), status, LeaveType.Sick);
+        var error = Assert.Throws<LeaveRequestException>(() => new LeaveRequestService(db)
+            .Create(Dto(employee, new(2026, 3, start), new(2026, 3, end))));
+        Assert.Equal(409, error.StatusCode);
+        Assert.Equal("overlapping_request", error.Code);
+        Assert.Single(db.LeaveRequests);
+    }
+
+    [Fact]
+    public void Create_RejectedOtherEmployeeAndAdjacentDates_DoNotBlock()
+    {
+        using var db = _database.NewDb();
+        var employee = AddEmployee(db);
+        AddRequest(db, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Rejected);
+        var other = AddEmployee(db);
+        AddRequest(db, other, new(2026, 3, 1), new(2026, 3, 3));
+        var service = new LeaveRequestService(db);
+        service.Create(Dto(employee, new(2026, 3, 1), new(2026, 3, 3)));
+        Assert.Equal(1, service.Create(Dto(employee, new(2026, 3, 4), new(2026, 3, 4))).Days);
+    }
+
+    [Fact]
+    public void Approve_LegacyOverlappingPending_FirstWinsAndSecondStaysPending()
+    {
+        using var db = _database.NewDb();
+        var employee = AddEmployee(db);
+        var first = AddRequest(db, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Pending);
+        var second = AddRequest(db, employee, new(2026, 3, 2), new(2026, 3, 4), LeaveStatus.Pending);
+        var service = new LeaveRequestService(db);
+        Assert.Equal(LeaveStatus.Approved, service.Approve(first.Id).Status);
+        var error = Assert.Throws<LeaveRequestException>(() => service.Approve(second.Id));
+        Assert.Equal("overlapping_request", error.Code);
+        Assert.Equal(409, error.StatusCode);
+        db.Entry(second).Reload();
+        Assert.Equal(LeaveStatus.Pending, second.Status);
+        Assert.Equal(3, db.LeaveRequests.Where(r => r.Status == LeaveStatus.Approved).Sum(r => r.Days));
+    }
+
+    [Fact]
+    public void Approve_RejectedOverlap_DoesNotBlock()
+    {
+        using var db = _database.NewDb();
+        var employee = AddEmployee(db);
+        AddRequest(db, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Rejected);
+        var request = AddRequest(db, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Pending);
+        Assert.Equal(LeaveStatus.Approved, new LeaveRequestService(db).Approve(request.Id).Status);
+    }
+
+    [PostgresFact]
+    public async Task ConcurrentOverlappingApprovals_OnlyOneSucceeds()
+    {
+        using var setup = _database.NewDb();
+        var employee = AddEmployee(setup);
+        var first = AddRequest(setup, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Pending);
+        var second = AddRequest(setup, employee, new(2026, 3, 1), new(2026, 3, 3), LeaveStatus.Pending);
+        var options = new DbContextOptionsBuilder<LeaveDbContext>().UseNpgsql(setup.Database.GetConnectionString()).Options;
+        using var start = new Barrier(2);
+        Task<string> Run(int id) => Task.Run(() =>
+        {
+            using var db = new LeaveDbContext(options);
+            if (!start.SignalAndWait(TimeSpan.FromSeconds(15))) throw new TimeoutException();
+            try { new LeaveRequestService(db).Approve(id); return "approved"; }
+            catch (LeaveRequestException error) { Assert.Equal(409, error.StatusCode); return error.Code; }
+        });
+        Assert.Equal(new[] { "approved", "overlapping_request" }, (await Task.WhenAll(Run(first.Id), Run(second.Id))).OrderBy(x => x));
+        setup.ChangeTracker.Clear();
+        Assert.Single(setup.LeaveRequests.Where(r => r.Status == LeaveStatus.Approved));
+    }
+
+    [PostgresFact]
+    public async Task ConcurrentOverlappingCreates_OnlyOneIsSaved()
+    {
+        using var setup = _database.NewDb();
+        var employee = AddEmployee(setup);
+        var options = new DbContextOptionsBuilder<LeaveDbContext>().UseNpgsql(setup.Database.GetConnectionString()).Options;
+        using var start = new Barrier(2);
+        Task<string> Run() => Task.Run(() =>
+        {
+            using var db = new LeaveDbContext(options);
+            if (!start.SignalAndWait(TimeSpan.FromSeconds(15))) throw new TimeoutException();
+            try { new LeaveRequestService(db).Create(Dto(employee, new(2026, 3, 1), new(2026, 3, 3))); return "created"; }
+            catch (LeaveRequestException error) { Assert.Equal(409, error.StatusCode); return error.Code; }
+        });
+        Assert.Equal(new[] { "created", "overlapping_request" }, (await Task.WhenAll(Run(), Run())).OrderBy(x => x));
+        Assert.Single(setup.LeaveRequests);
     }
 
     [PostgresFact]

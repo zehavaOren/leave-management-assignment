@@ -484,6 +484,14 @@
           <context context-type="linenumber">8</context>
         </context-group>
       </trans-unit>
+    <trans-unit id="overlappingRequest" datatype="html">
+        <source>These dates overlap another leave request for this employee. Choose different dates.</source>
+        <target>התאריכים חופפים לבקשת חופשה אחרת של העובד. בחרו תאריכים אחרים.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/i18n/leave-request-errors.ts</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

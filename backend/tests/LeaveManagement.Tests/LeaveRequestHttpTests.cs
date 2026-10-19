@@ -40,6 +40,19 @@ public class LeaveRequestHttpTests
     private static WebApplicationFactory<Program> CreateApp() => new HttpTestApp();
 
     [Fact]
+    public async Task Http_OverlappingCreate_Returns409WithCode()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        var dto = new { employeeId = 1, type = 1, startDate = "2030-03-01", endDate = "2030-03-03" };
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/leave-requests", dto)).StatusCode);
+        var conflict = await client.PostAsJsonAsync("/api/leave-requests", dto);
+        Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+        var problem = await conflict.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("overlapping_request", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task Http_CreateApproveAndConflict_UsesExpectedStatusCodes()
     {
         using var app = CreateApp();

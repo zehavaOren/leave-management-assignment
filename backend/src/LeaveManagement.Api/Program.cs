@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<LeaveManagement.Api.Services.LeaveRequestService>();
+builder.Services.AddScoped<LeaveManagement.Api.Services.EmployeeService>();
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
 {
     if (context.ProblemDetails.Status >= 500)
