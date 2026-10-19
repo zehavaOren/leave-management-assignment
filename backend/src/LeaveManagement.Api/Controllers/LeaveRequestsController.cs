@@ -12,7 +12,12 @@ namespace LeaveManagement.Api.Controllers;
 public class LeaveRequestsController : ControllerBase
 {
     private readonly LeaveRequestService _service;
-    public LeaveRequestsController(LeaveRequestService service) => _service = service;
+    private readonly ILogger<LeaveRequestsController> _logger;
+    public LeaveRequestsController(LeaveRequestService service, ILogger<LeaveRequestsController> logger)
+    {
+        _service = service;
+        _logger = logger;
+    }
 
     // GET /api/leave-requests
     [HttpGet]
@@ -44,6 +49,7 @@ public class LeaveRequestsController : ControllerBase
         try { return Ok(operation()); }
         catch (LeaveRequestException exception)
         {
+            _logger.LogWarning(exception, "Leave request rejected with HTTP {StatusCode}: {Reason}", exception.StatusCode, exception.Message);
             var problem = new ProblemDetails { Status = exception.StatusCode, Title = exception.Message };
             return exception.StatusCode switch
             {

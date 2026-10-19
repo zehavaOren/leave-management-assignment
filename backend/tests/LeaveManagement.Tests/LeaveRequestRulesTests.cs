@@ -136,7 +136,7 @@ public class LeaveRequestRulesTests : IClassFixture<TestDatabase>
     public void Approve_MissingRequest_Returns404()
     {
         using var db = _database.NewDb();
-        Assert.IsType<NotFoundObjectResult>(new LeaveRequestsController(new LeaveRequestService(db)).Approve(999));
+        Assert.IsType<NotFoundObjectResult>(new LeaveRequestsController(new LeaveRequestService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<LeaveRequestsController>.Instance).Approve(999));
     }
 
     [Theory]
@@ -147,7 +147,7 @@ public class LeaveRequestRulesTests : IClassFixture<TestDatabase>
         using var db = _database.NewDb();
         var e = AddEmployee(db);
         var request = AddRequest(db, e, new(2026, 3, 1), new(2026, 3, 1), status);
-        Assert.IsType<ConflictObjectResult>(new LeaveRequestsController(new LeaveRequestService(db)).Approve(request.Id));
+        Assert.IsType<ConflictObjectResult>(new LeaveRequestsController(new LeaveRequestService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<LeaveRequestsController>.Instance).Approve(request.Id));
     }
 
     [Fact]

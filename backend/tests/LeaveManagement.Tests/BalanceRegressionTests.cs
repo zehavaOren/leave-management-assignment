@@ -24,7 +24,7 @@ public class BalanceRegressionTests : IClassFixture<TestDatabase>
             Days = 18, Status = LeaveStatus.Approved
         });
         db.SaveChanges();
-        var controller = new LeaveRequestsController(new LeaveManagement.Api.Services.LeaveRequestService(db));
+        var controller = new LeaveRequestsController(new LeaveManagement.Api.Services.LeaveRequestService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<LeaveRequestsController>.Instance);
         var result = controller.Create(new CreateLeaveRequestDto
         {
             EmployeeId = employee.Id, Type = LeaveType.Vacation,
@@ -34,4 +34,3 @@ public class BalanceRegressionTests : IClassFixture<TestDatabase>
         Assert.Single(db.LeaveRequests);
     }
 }
-
