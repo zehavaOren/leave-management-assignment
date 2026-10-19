@@ -51,6 +51,8 @@ public class LeaveRequestsController : ControllerBase
         {
             _logger.LogWarning(exception, "Leave request rejected with HTTP {StatusCode}: {Reason}", exception.StatusCode, exception.Message);
             var problem = new ProblemDetails { Status = exception.StatusCode, Title = exception.Message };
+            problem.Extensions["code"] = exception.Code;
+            foreach (var detail in exception.Details) problem.Extensions[detail.Key] = detail.Value;
             return exception.StatusCode switch
             {
                 400 => BadRequest(problem),

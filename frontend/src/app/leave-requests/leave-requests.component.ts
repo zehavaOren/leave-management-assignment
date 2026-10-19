@@ -72,7 +72,7 @@ export class LeaveRequestsComponent implements OnInit {
     this.error.set(''); this.success.set('');
     const value = this.form.getRawValue();
     if (this.form.invalid || value.employeeId === null || value.type === null || this.days < 1) {
-      this.error.set(this.translations.text('formInvalid')); return;
+      this.error.set(this.formErrorMessage()); return;
     }
     this.submitting.set(true);
     this.api.create({ ...value, employeeId: value.employeeId, type: value.type })
@@ -85,6 +85,18 @@ export class LeaveRequestsComponent implements OnInit {
         },
         error: (error: unknown) => this.error.set(this.api.errorMessage(error))
       });
+  }
+
+  private formErrorMessage(): string {
+    const value = this.form.getRawValue();
+    const keys: TranslationKey[] = [];
+    if (value.employeeId === null) keys.push('chooseEmployee');
+    if (value.type === null) keys.push('chooseType');
+    if (!value.startDate) keys.push('startDateInvalid');
+    if (!value.endDate) keys.push('endDateInvalid');
+    if (this.form.hasError('dateOrder')) keys.push('dateOrder');
+    if (keys.length === 0 && this.days < 1) keys.push('invalidDates');
+    return keys.map(key => this.translations.text(key)).join(' ') || this.translations.text('formInvalid');
   }
 
   // Wired up by the candidate as part of the assignment.

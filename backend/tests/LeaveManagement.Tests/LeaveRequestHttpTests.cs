@@ -58,6 +58,8 @@ public class LeaveRequestHttpTests
         Assert.Equal(LeaveStatus.Approved, (await approval.Content.ReadFromJsonAsync<LeaveRequestResponse>())!.Status);
         var repeat = await client.PostAsJsonAsync($"/api/leave-requests/{request.Id}/approve", new { });
         Assert.Equal(HttpStatusCode.Conflict, repeat.StatusCode);
+        var conflict = await repeat.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("request_already_approved", conflict.GetProperty("code").GetString());
         Assert.Equal("application/problem+json", repeat.Content.Headers.ContentType?.MediaType);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/leave-requests/999/approve", new { })).StatusCode);
     }
@@ -72,5 +74,38 @@ public class LeaveRequestHttpTests
             employeeId = 1, startDate = "2026-03-01", endDate = "2026-03-02"
         });
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+    [Theory]
+    [InlineData("2026-03-03", "2026-03-01", 0, "invalid_date_range")]
+    [InlineData("2026-03-01", "2026-03-02", 99, "invalid_leave_type")]
+    [InlineData("0001-01-01", "2026-03-02", 0, "start_date_required")]
+    public async Task Http_InvalidRequest_IdentifiesTheSpecificProblem(string start, string end, int type, string code)
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/leave-requests", new
+        {
+            employeeId = 1, type, startDate = start, endDate = end
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal(code, problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Http_InsufficientBalance_ReturnsYearRequestedAndRemainingDays()
+    {
+        using var app = CreateApp();
+        using var client = app.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/leave-requests", new
+        {
+            employeeId = 1, type = 0, startDate = "2026-03-01", endDate = "2026-03-03"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("insufficient_balance", problem.GetProperty("code").GetString());
+        Assert.Equal(2026, problem.GetProperty("year").GetInt32());
+        Assert.Equal(3, problem.GetProperty("requestedDays").GetInt32());
+        Assert.Equal(2, problem.GetProperty("remainingDays").GetInt32());
     }
 }

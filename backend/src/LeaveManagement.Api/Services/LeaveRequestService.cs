@@ -7,7 +7,18 @@ namespace LeaveManagement.Api.Services;
 public sealed class LeaveRequestException : Exception
 {
     public int StatusCode { get; }
-    public LeaveRequestException(int statusCode, string message) : base(message) => StatusCode = statusCode;
+    public string Code { get; }
+    public IReadOnlyDictionary<string, object> Details { get; }
+    public LeaveRequestException(int statusCode, string message)
+        : this(statusCode, "invalid_request", message) { }
+
+    public LeaveRequestException(int statusCode, string code, string message,
+        IReadOnlyDictionary<string, object>? details = null) : base(message)
+    {
+        StatusCode = statusCode;
+        Code = code;
+        Details = details ?? new Dictionary<string, object>();
+    }
 }
 
 public sealed class LeaveRequestService
@@ -28,12 +39,21 @@ public sealed class LeaveRequestService
     {
         var start = dto.StartDate.Date;
         var end = dto.EndDate.Date;
-        if (dto.EmployeeId <= 0 || (dto.Type == null || !Enum.IsDefined(dto.Type.Value)) ||
-            start == DateTime.MinValue || end == DateTime.MinValue || end < start)
-            throw new LeaveRequestException(400, "Choose an employee, a valid leave type and an ordered date range.");
+        if (dto.EmployeeId <= 0)
+            throw new LeaveRequestException(400, "invalid_employee", "Choose a valid employee.");
+        if (dto.Type == null)
+            throw new LeaveRequestException(400, "leave_type_required", "Choose a leave type.");
+        if (!Enum.IsDefined(dto.Type.Value))
+            throw new LeaveRequestException(400, "invalid_leave_type", "The selected leave type is invalid.");
+        if (start == DateTime.MinValue)
+            throw new LeaveRequestException(400, "start_date_required", "Enter a valid start date.");
+        if (end == DateTime.MinValue)
+            throw new LeaveRequestException(400, "end_date_required", "Enter a valid end date.");
+        if (end < start)
+            throw new LeaveRequestException(400, "invalid_date_range", "End date must be on or after start date.");
 
         var employee = _db.Employees.SingleOrDefault(e => e.Id == dto.EmployeeId)
-            ?? throw new LeaveRequestException(404, "Employee not found.");
+            ?? throw new LeaveRequestException(404, "employee_not_found", "The selected employee no longer exists.");
         EnsureBalance(employee, dto.Type.Value, start, end, 400);
         var request = new LeaveRequest
         {
@@ -51,7 +71,7 @@ public sealed class LeaveRequestService
         // Read only the immutable employee id before acquiring the shared employee lock.
         var employeeId = _db.LeaveRequests.AsNoTracking().Where(r => r.Id == id)
             .Select(r => (int?)r.EmployeeId).SingleOrDefault()
-            ?? throw new LeaveRequestException(404, "Leave request not found.");
+            ?? throw new LeaveRequestException(404, "request_not_found", "The leave request no longer exists.");
 
         using var transaction = _db.Database.BeginTransaction(_db.Database.IsNpgsql() ? System.Data.IsolationLevel.ReadCommitted : System.Data.IsolationLevel.Serializable);
         // PostgreSQL READ COMMITTED is deliberate: after waiting for the lock, the
@@ -79,7 +99,11 @@ public sealed class LeaveRequestService
         var request = _db.LeaveRequests.Include(r => r.Employee).Single(r => r.Id == id);
         _db.Entry(request).Reload();
         if (request.Status != LeaveStatus.Pending)
-            throw new LeaveRequestException(409, "Only a pending request can be approved.");
+            throw new LeaveRequestException(409,
+                request.Status == LeaveStatus.Approved ? "request_already_approved" : "request_rejected",
+                request.Status == LeaveStatus.Approved
+                    ? "This request has already been approved. Refresh to see its latest status."
+                    : "This request has been rejected and cannot be approved.");
         EnsureBalance(employee, request.Type, request.StartDate, request.EndDate, 409);
         request.Status = LeaveStatus.Approved;
         _db.SaveChanges();
@@ -101,8 +125,15 @@ public sealed class LeaveRequestService
             var first = new DateTime(year, 1, 1);
             var last = new DateTime(year, 12, 31);
             var used = approved.Sum(r => OverlapDays(r.StartDate, r.EndDate, first, last));
-            if (used + OverlapDays(start, end, first, last) > employee.AnnualQuota)
-                throw new LeaveRequestException(statusCode, $"Not enough vacation balance for {year}.");
+            var requested = OverlapDays(start, end, first, last);
+            var remaining = Math.Max(0, employee.AnnualQuota - used);
+            if (requested > remaining)
+                throw new LeaveRequestException(statusCode, "insufficient_balance",
+                    $"Not enough vacation balance for {year}: requested {requested} days, available {remaining} days.",
+                    new Dictionary<string, object>
+                    {
+                        ["year"] = year, ["requestedDays"] = requested, ["remainingDays"] = remaining
+                    });
         }
     }
 
@@ -118,5 +149,3 @@ public sealed class LeaveRequestService
         request.Employee == null ? null : new EmployeeResponse(request.Employee.Id, request.Employee.Name, request.Employee.AnnualQuota),
         request.Type, request.StartDate, request.EndDate, request.Status, request.Days);
 }
-
-
